@@ -1,0 +1,151 @@
+		TWITTER CLONE WITH NEXT-NEXTAUTH-RECOIL-FIREBASEV9 AND TAILWIND
+
+Playlist: https://www.youtube.com/watch?v=5Wak0iyGCrc&t=169s
+Repo: https://github.com/lukef7fywmrp/twitter-clone
+
+Parece que Recoil es mucho mejor que Redux,por eso lo usaremos.Empiezo creando un proyecto next con tailwind y también en Firebase.
+Ya lo enlazaremos más tarde.
+
+NOTA: fijate que Next crea la rama main y no master como create-react-app.
+
+IMPORTANTE: fijate como se toma su tiempo para estructurar la aplicación antes de empezar nada.En esta app veo tres zonas obvias y realmente es bastante sencillo.
+IMPORTANTE: usar tag semánticas
+
+Fijate que importante será haber dedicado unos minutos a esto:
+  <main>
+        {/* Sidebar */}
+        {/* Feed */}
+        {/* Widgets */}
+
+        {/* Modal */}
+      </main>
+
+NOTA:un div no tiene altura mientras no tenga contenido,igual que casi cualquier etiqueta.
+
+Recuerda que esto "flex flex-col items-center" va a centrar horizontalmente,es como el justify-center.Obviamente lo quiero para los iconos del sidebar.
+
+NOTA: si copio la dirección de una imagen de Next veré esto:
+http://localhost:3000/_next/image?url=https%3A%2F%2Frb.gy%2Fogau5a&w=32&q=75
+
+Esto es porque Next convierte las imágenes a formato webp,el cual reduce el bundle size en producción y también mejora el cacheo de la imagen.
+
+Fijate que vamos a usar el mismo paquete de iconos.Los heroicons,que están echos por los mismos que han hecho Tailwind:
+npm add @heroicons/react <- diria que por el nombre estará para Angular tmb.
+
+Fijate como esta mostrando poniendo en inline(no uses block)
+  <button className="hidden xl:inline">Tweet</button>
+
+NOTA: para cambiar el espaciado entre lineas en tailwind es con heading:
+   <div className="hidden xl:inline leading-5"> <- espaciado mayor entre lineas  
+
+Bien,tras terminar la sidebar fijate que al crear el <Feed> me sale a la izquierda,porque? porque puso el Sidebar en fixed.Lo arreglaremos dandole un margin right a todo el Feed
+
+Fijate que vamos a poner el <Feed> en flex-grow(lo mismo que flex-1)También puedo usar jit(Just in Time) y usasr flex-[0.5] por ejemplo,aunque con flex-1 o flex-grow nos va a valer
+
+Para establecer un border(border | border-2(2px) | border-3 ...)
+En este caso solo quiero un border rigth y border left(border-l border-r ) de 1px.
+
+IMPORTANTE: vamos a poner el primer div del componente <Feed> en position sticky.Siempre que posicione un elemento(sticy,fixed o absolute) tengo que darle una altura.La altura la puedo dar con height:100% o height:100vh o con top-0 por ejemplo.
+Da igual con qué darle la altura,pero tengo que darle una altura de alguna forma.
+
+IMPORTANTE: fijate que estabas confundido,puedo definir una clase con @apply y por ejemplo decir que tiene un px-4 pero luego cuando la implemente simplemente sobreescribo ese valor o cualqueir otro si no estoy conforme:
+
+   <div className="hoverAnimation w-9 h-9 flex items-center  justify-center xl:px-0 ml-auto"> <- xl:px-0 sobreescribe al xl:px-4 de @apply hoverAnimation
+Este framework es la puta ostia.
+
+IMPORTANTE: Tailwind tiene las clases divide-x{size?} y divide-y-{size?} que agrega un divisor en ese eje del size dado automáticamente por cada child que tenga el elemento con la clase.Ejemplo:
+
+   <div className="w-full divide-y divide-gray-700"> <- en este caso es de 1px pero puedo usar divide-y-2,etc...
+
+NOTA: con el hook useRef simplemente se crea un puntero a una dirección de memoria.Puedo albergar lo que quiera en él:
+  /* references to memory address */
+  const filePickerRef = useRef<HTMLInputElement>(null);
+
+IMPORTANTE: recuerda que las clases custom que declare van en la layer components:
+
+@layer base {
+  body {
+    @apply bg-black;
+  }
+}
+
+@layer components {
+  .hoverAnimation {
+    @apply hover:bg-[#d9d9d9] hover:bg-opacity-10 rounded-full cursor-pointer w-[52px] h-[52px] xl:w-auto xl:h-auto xl:py-3 xl:px-4 transition duration-200 ease-out;
+  }
+}
+Van en @layer components.
+NOTA:fijate que puedo rotar cualquier imagen,debo recordar que existe esta funcionalidad:
+<div className="icon rotate-90">
+
+						EMOJIMART LIBRARY 2H00M
+
+Esta libreria ya la he usado,es bastante bonita,sobre todo su tema oscuro.
+>npm i emoji-mart | yarn add emoji-mart
+>npm i -D @types/emoji-mart
+
+Repo oficial: https://github.com/missive/emoji-mart
+
+Ya solo es traerse su css y el HOC:
+import 'emoji-mart/css/emoji-mart.css'
+import { Picker } from 'emoji-mart'
+
+Al dar al típico botón para iconos lo abro con un useState<boolean>:
+  {showEmojis && (
+    <Picker
+      onSelect={addEmoji}
+
+Agrego el icono con e.native:
+  const addEmoji = (e: any) => {
+    setInput(input + e.native)
+  }
+Desde luego es muy sencillo.Acuerdate del tema oscuro y que es bastante personalizable.
+
+NOTA:fijate que inteligente ha sido deshabilitando el botón si no hay texto en el input ni un file:
+ disabled={!input.trim() && !selectedFile}
+
+			FIREBASE V9 CONFIGURATION AND POST UPLOAD
+
+NOTA: Firebase ha recibido una breaking release que ha pesar de los cambios es una completa mejora,reduciendo el size de las importaciones ya que ahora es modular y solo te traes lo que necesitas mediante funciones getXXX.
+  
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage"; <- fijate como entra a firebase/storage y sólo se trae esa función,reduciendo el tamaño del import.
+
+Lo mismo para addDoc,updateDoc,etc.Al ser modular ahora reducirá el bundle size final de mi app.
+Bien,habilito Auth por Google en Firebase y me traigo el Id y el Secret al .env.También habilito Storage con reglas abiertas y Firestore en modo prueba.
+
+PASO UNO: guardar el documento:
+Recuerda que addDoc:Promise<DocumentReference> devuelve una promesa con la referencia al documento,asi que docRef es un buen nombre para rescatar el retorno.
+
+  const docRef = await addDoc(collection(db, 'posts'), {
+      id: session.user.uid,
+      username: session.user.name,
+      userImg: session.user.image,
+      tag: session.user.tag, 
+      text: input,
+      timestamp: serverTimestamp(),
+    })
+Fijate en la función serverTimestamp que simplemente devuelve un timestamp,el cual almacenaré en la propiedad timestamp.Genial
+
+PASO DOS: sacar una referencia a Firebase Storage.
+Por otra parte,para pintar la imagen va a buscar en el Storage.La forma de buscar en Firebase Storage es usando el método ref(storage,url).Se devolverá una referencia a ese documento
+
+/* ref devuelve una referencia a la parte del Storage que le indique,en este caso a /post/:docRef.id/image .Aqui iré metiendo las imagenes que suba cada usuario*/
+
+const imageRef = ref(storage, `posts/${docRef.id}/image`)
+
+PASO TRES: si hay un file,aparte de crear el documento en Firestore voy a subir a esa zona de Firestore que tengo referenciada la imagen,acto seguido me traigo la URL creada y actualizo el usuario con esa imagen
+
+   if (selectedFile) {
+      await uploadString(imageRef, selectedFile, "data_url").then(async () => {
+        const downloadURL = await getDownloadURL(imageRef);
+        await updateDoc(doc(db, "posts", docRef.id), {
+          image: downloadURL,
+        });
+      });
+    }
+
+Fijate que selectedFile es un string,de ahi el uso de uploadString,y voy a obtener una URL válida con la imagen.
+2h40m
+¿Y si sube más de una?
