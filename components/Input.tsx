@@ -17,8 +17,12 @@ import { getDownloadURL, ref, uploadString } from '@firebase/storage'
 import { db, storage } from '../firebase'
 import 'emoji-mart/css/emoji-mart.css'
 import { BaseEmoji, EmojiData, Picker } from 'emoji-mart'
+import { useSession } from 'next-auth/react'
 
 const Input = () => {
+  
+  const {data:session} = useSession();
+
   /* local states */
   const [input, setInput] = useState<string>('')
   const [selectedFile, setSelectedFile] = useState<string>('')
@@ -37,17 +41,17 @@ const Input = () => {
     setLoading(true)
 
     const docRef = await addDoc(collection(db, 'posts'), {
-      /*       id: session.user.uid,
-      username: session.user.name,
-      userImg: session.user.image,
-      tag: session.user.tag, */
+      id: session?.user.uid,
+      username: session?.user.name,
+      userImg: session?.user.image,
+      tag: session?.user.tag, 
       text: input,
       timestamp: serverTimestamp(),
     })
     /* ref devuelve una referencia a la parte del Storage que le indique,en este caso a la imagen*/
     const imageRef = ref(storage, `posts/${docRef.id}/image`)
 
-    /* si hay un file,lo subo a esa porción del Storage,despues,tras subirlo,me traigo la URL creada para la imagen y actualizo el documento agregando la propiedad image con la url */
+    /* si hay un file,lo subo a esa porción del Storage,despues,tras subirlo,me traigo la URL creada para la imagen y actualizo el documento agregando la propiedad image con la url a cada post */
     if (selectedFile) {
       await uploadString(imageRef, selectedFile, 'data_url').then(async () => {
         const downloadURL = await getDownloadURL(imageRef)
@@ -64,18 +68,18 @@ const Input = () => {
   }
 
   const addImageToPost = (e: ChangeEvent<HTMLInputElement>) => {
-    const reader = new FileReader()
+     const reader = new FileReader()
     if (e.target.files![0]) {
       reader.readAsDataURL(e.target.files![0])
-    }
-
-    reader.onload = (readerEvent) => {
+    } 
+    
+    /* esto crea un data:URI(data:image-png;base64,data) */
+     reader.onload = (readerEvent) => {
       setSelectedFile(readerEvent.target!.result as string)
     }
 
-    /* const pickedFile = filePickerRef.current!.files![0]
-    const fileUrl = URL.createObjectURL(pickedFile)
-    setSelectedFile(fileUrl) */
+ /* si bien URL.createObjectURL me crea un blob:http... temporal Storage me pide un data:URI */
+    // URL.createObjectURL(filePickerRef.current!.files![0])
   }
 
   const addEmoji = (e: EmojiData) => {
@@ -93,16 +97,16 @@ const Input = () => {
 
   return (
     <div
-      className={`flex space-x-3 overflow-y-scroll border-b border-gray-700 p-3 `}
+      className={`flex space-x-3 overflow-y-scroll border-b border-gray-700 p-3 ${loading && 'opacity-60'}`}
     >
       <img
-        src="https://rb.gy/ogau5a"
+        src={session?.user.image!}
         alt=""
         className="h-11 w-11 cursor-pointer rounded-full"
       />
 
       <div className="w-full divide-y divide-gray-700">
-        <div className={`${selectedFile && 'pb-7'} ${input && 'space-y-2-5'}`}>
+        <div className={`${selectedFile && 'pb-7'} ${input && 'space-y-2.5'}`}>
           <textarea
             value={input}
             onChange={handleTextArea}
@@ -128,61 +132,63 @@ const Input = () => {
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-2.5 ">
-          <div className="flex items-center">
-            <div
-              className="icon"
-              onClick={() => filePickerRef.current!.click()}
+        {!loading && (
+          <div className="flex items-center justify-between pt-2.5 ">
+            <div className="flex items-center">
+              <div
+                className="icon"
+                onClick={() => filePickerRef.current!.click()}
+              >
+                <PhotographIcon className="h-[24px] text-[#1d9bf0]" />
+                <input
+                  type="file"
+                  hidden
+                  ref={filePickerRef}
+                  onChange={addImageToPost}
+                />
+              </div>
+              <div className="icon rotate-90">
+                <ChartBarIcon className="h-[22px] text-[#1d9bf0]" />
+              </div>
+
+              <div className="icon" onClick={() => setShowEmojis(!showEmojis)}>
+                <EmojiHappyIcon className="h-[22px] text-[#1d9bf0]" />
+              </div>
+
+              <div className="icon">
+                <CalendarIcon className="h-[22px] text-[#1d9bf0]" />
+              </div>
+
+              {showEmojis && (
+                <Picker
+                  onSelect={addEmoji}
+                  // title="Pick your emoji…"
+                  // emoji="point_up"
+                  color="#1d9bf0"
+                  showPreview={false}
+                  showSkinTones={false}
+                  // i18n={{ search: 'Search...' }}
+                  style={{
+                    position: 'absolute',
+                    marginTop: '465px',
+                    marginLeft: -40,
+                    maxWidth: '320px',
+                    borderRadius: '20px',
+                  }}
+                  theme="dark"
+                />
+              )}
+            </div>
+
+            <button
+              className="rounded-full bg-[#1d9bf0] px-4 py-1.5 font-bold text-white shadow-md hover:bg-[#1a8cd8] disabled:cursor-default disabled:opacity-50 disabled:hover:bg-[#1d9bf0]"
+              disabled={!input.trim() && !selectedFile}
+              onClick={sendPost}
             >
-              <PhotographIcon className="h-[24px] text-[#1d9bf0]" />
-              <input
-                type="file"
-                hidden
-                ref={filePickerRef}
-                onChange={(e) => addImageToPost(e)}
-              />
-            </div>
-            <div className="icon rotate-90">
-              <ChartBarIcon className="h-[22px] text-[#1d9bf0]" />
-            </div>
-
-            <div className="icon" onClick={() => setShowEmojis(!showEmojis)}>
-              <EmojiHappyIcon className="h-[22px] text-[#1d9bf0]" />
-            </div>
-
-            <div className="icon">
-              <CalendarIcon className="h-[22px] text-[#1d9bf0]" />
-            </div>
-
-            {showEmojis && (
-              <Picker
-                onSelect={addEmoji}
-                // title="Pick your emoji…"
-                // emoji="point_up"
-                color="#1d9bf0"
-                showPreview={false}
-                showSkinTones={false}
-                // i18n={{ search: 'Search...' }}
-                style={{
-                  position: 'absolute',
-                  marginTop: '465px',
-                  marginLeft: -40,
-                  maxWidth: '320px',
-                  borderRadius: '20px',
-                }}
-                theme="dark"
-              />
-            )}
+              Tweet
+            </button>
           </div>
-
-          <button
-            className="rounded-full bg-[#1d9bf0] px-4 py-1.5 font-bold text-white shadow-md hover:bg-[#1a8cd8] disabled:cursor-default disabled:opacity-50 disabled:hover:bg-[#1d9bf0]"
-            disabled={!input.trim() && !selectedFile}
-            onClick={sendPost}
-          >
-            Tweet
-          </button>
-        </div>
+        )}
       </div>
     </div>
   )

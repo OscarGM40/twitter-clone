@@ -147,5 +147,173 @@ PASO TRES: si hay un file,aparte de crear el documento en Firestore voy a subir 
     }
 
 Fijate que selectedFile es un string,de ahi el uso de uploadString,y voy a obtener una URL válida con la imagen.
-2h40m
 ¿Y si sube más de una?
+
+Bien,y para leer la imagen voy a usar la clase FileReader,la cual puedo ver que se usa para leeer asincronamente Files u otros Buffers de datos:
+
+FileReader: Lets web applications asynchronously read the contents of files (or raw data buffers) stored on the user's computer, using File or Blob objects to specify the file or data to read.
+
+const addImageToPost = (e:ChangeEvent<HTMLInputElement>) => {
+  const reader = new FileReader();
+  if(e.target.files![0]){ <- sé que va a haber uno
+    reader.readAsDataURL(e.target.files![0]
+  }
+  read.onload = (readerEvent) => { <- readerEvent será el resultado de leer el Blob
+  setSelectedFile(readerEvent.target!.result as string)
+
+IMPORTANTE: esto crea un data-image de esta forma:
+ data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/4gIcSUNDX <- muy largo
+
+						DATA:URI INTRO
+
+Con data:URI podemos incluir pequeños elementos de datos en linea,como si fueran referenciados hacia una fuente externa.Los data:URI tienen la siguiente sintaxis:
+data:<media_type>;[base64],<data> 
+Ejemplo(data:image/jpg;base64,kfdkslfjl) <- arriba tengo otro
+
+* El mediatype puede ser algo como image/png para una imagen png.Es opcional y si lo omito por defecto será text/plain.
+* Base64 indica el tipo de codificación de los datos binarios.Puedo no especificarlo y entonces no encriptaré los datos, por ejemplo:
+data:text/html,<h1>Hola%20mundo</h1>.
+* POr último data son los datos(codificados o no)
+
+Bien,¿y para que sirve esto?
+1- Puedo reemplazar el valor del atributo src de una imagen con data:URI:
+<img src="data:image-png;base64,klsdjflkalsjf>
+2- En el CSS puedo usar lo mismo con las imagenes al usar url():
+.data_uri{
+  background-image: url(data:image-jpeg;base64,fjsdlkf);
+
+Fijate que es esto lo que subiré a Storage(el data:URI).También tenía la opción de usar URL.createObjectURL(blob|mediaSource),que crea un blob temporal:
+blob:http://localhost:3000/634ce332-c676-43f8-9f9d-6d2047870553 fileUrl
+
+Si embargo,si bien esto me vale para mostrar la imagen creando una URL temporal ese blob:http... no me vale para almacenarla en Storage:
+
+FirebaseError: Firebase Storage: String does not match format 'data_url': Must be formatted 'data:[<mediatype>][;base64],<data> (storage/invalid-format)
+
+Con lo que queda claro que cuando use Storage tengo que subir en data:URI.Perfecto,todo claro y muy sencillo.
+Fijate que getDownloadURL también fue importante.Esta aqui el código asinto,no te rayes.
+
+						2H50M NEXTAUTH V4 
+
+IMPORTANTE: recuerda que NextAuth va a necesitar dos environment variables en producción(NEXTAUTH_SECRET Y NEXTAUTH_URL)
+NextAuth ofrece tantos providers y ofrece SSR en la comprobación.
+Instalo con npm i next-auth(trae los types para TS)
+
+NOTA:fijate que fácil parece gestionar la piscina de usuarios con una DB mía:
+
+export default NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_ID!,
+      clientSecret: process.env.GOOGLE_SECRET!,
+    }), ],
+  secret: process.env.SECRET!,
+  database: {
+    type: "mongodb",
+    url: process.env.MONGODB_URI!,
+  },
+Simplemente le pasaría la propiedad database...
+
+NOTA: voy a usar la propiedad callbacks para crear dos propiedades en el objeto global 'session':
+
+Callbacks are asynchronous functions you can use to control what happens when an action is performed.
+ Callbacks are extremely powerful, especially in scenarios involving JSON Web Tokens as they allow you to implement access controls without a database and to integrate with external databases or APIs
+Necesitaŕe las callbacks para pasarle el Token o el userId al browser.NextAuth me proporciona 4 callbacks(session,jwt,redirect y signIn):
+
+  callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      return true
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl
+    },
+    async session({ session, user, token }) {
+      return session
+    },
+    async jwt({ token, user, account, profile, isNewUser }) {
+      return token
+    }
+
+En la documentación puedo ver más,pero por ejemplo podria deshabilitar el sigIn si un usuario esta inactive:
+callbacks: {
+  async signIn({ user, account, profile, email, credentials }) {
+    const isAllowedToSignIn = true
+    if (isAllowedToSignIn) {
+      return true
+    } else {
+      // Return false to display a default error message
+      return false <- no podrá logearse.
+
+2- Redirect callback
+The redirect callback is called anytime the user is redirected to a callback URL (e.g. on signin or signout).
+
+3- JWT callback
+This callback is called whenever a JSON Web Token is created (i.e. at sign in) or updated (i.e whenever a session is accessed in the client). The returned value will be signed and optionally encrypted, and it is stored in a cookie.
+
+Requests to /api/auth/signin, /api/auth/session and calls to getSession(), useSession() will invoke this function, but only if you are using a JWT session. This method is not invoked when you persist sessions in a database.
+
+4- Session callback
+The session callback is called whenever a session is checked. By default, only a subset of the token is returned for increased security.
+
+NOTA:fijate que cada callback siempre retorna un arg de los que recibe:
+  callbacks: {
+    /* session(session,user,token) siempre debe de retornar la session.Cada callback pre-built debe retornar un arg  */
+    async session({ session, user, token }) {
+      console.log(session, user, token)
+      //@ts-ignore
+      session.user!.tag = session.user?.name?.split(" ")
+      .join("-")
+      .toLocaleLowerCase();
+      //@ts-ignore
+      session.user!.uid = token.sub;
+      return session;
+    },
+  }
+
+Fijate como vamos a mostrar un Login en el home si no hay session con un simple return <Login>:
+
+export default function Home({ trendingResults, followResults, providers }) {
+  const { data: session } = useSession();
+  const [isOpen, setIsOpen] = useRecoilState(modalState);
+
+  if (!session) return <Login providers={providers} />;
+
+Fijate que usó la propiedad callbackUrl para redirigir desde el login.Genial:
+
+ {Object.values(providers!).map((provider) => (
+    <div key={provider.name}>
+    {/* https://devdojo.com/tailwindcss/buttons#_ */}
+     <button
+      className="group relative ..."
+      onClick={() => signIn(provider.id, { callbackUrl: '/' })}
+
+NOTA: recuerda abastecer a la app de la session(y los providers) en el index.js:
+
+  const providers = await getProviders()
+  const session = await getSession(context)
+
+  return {
+    props: {
+      providers,
+      session,
+    },
+  }		
+
+IMPORTANTE: recuerda que si uso TS puedo aumentar los modulos session,jwt,etc:
+
+*En el file types/next-auth.d.ts :
+import NextAuth, { DefaultSession } from "next-auth"
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      tag?: string | null | undefined;
+      uid?: string | null | undefined;
+    } & DefaultSession["user"]
+  }
+}
+Esto también obliga a usar en el tsconfig.json la propiedad typeRoots:
+  "typeRoots": ["./types"],
+
+				3h27 RETRIEVING POST INFO FROM FIREBASE
+
+
