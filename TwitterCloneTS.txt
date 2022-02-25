@@ -314,6 +314,149 @@ declare module "next-auth" {
 Esto también obliga a usar en el tsconfig.json la propiedad typeRoots:
   "typeRoots": ["./types"],
 
-				3h27 RETRIEVING POST INFO FROM FIREBASE
+				3h34 RETRIEVING POST INFO FROM FIREBASE
 
+Realmente es bastante sencillo,sin embargo,hay varias formas de realizar el unsubscribe.La forma 'messy' ya la sé y es llamar al return() => con la cancelación a la Subscription:
 
+  const [posts, setPosts] = useState<QueryDocumentSnapshot<DocumentData>[]>([]);
+
+  // MESSY
+  // useEffect(() => {
+  //   const unsubscribe = onSnapshot(
+  //     query(collection(db, "posts"), orderBy("timestamp", "desc")),
+  //     (snapshot) => {
+  //       setPosts(snapshot.docs);
+  //     }
+  //   );
+
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, [db]);
+Nada que objetar,sin embargo,debido a que Firebase no me devuelve exactamente una Subscription sino una funcion Unsubscribe propia,puedo llamarla con un return implicito:
+
+  // CLEAN
+  useEffect(
+    () =>
+      onSnapshot(
+        query(collection(db, 'posts'), orderBy('timestamp', 'desc')),
+        (snapshot) => {
+          setPosts(snapshot.docs)
+        }
+      ),
+    [db]
+  )
+
+Desde luego queda mucho más limpio.
+Fijate que la clave está aqui,si yo tengo un return asi =>{ return } lo puedo resumir:
+De esto:
+useEffect ( () => {
+  return () => {
+  unsubscribe()
+  },[] ) 
+a esto:
+useEffect( () => unsubscribe(),[]) <- y que es un unsubscribe() más que toda la función??
+
+IMPORTANTE: fijate como me subscribo a cualquier cambio,pero además hago una query para traerlos ordenados por el campo timestamp en desc que hemos creado.
+Recuerda que aún faltaría llamar a data() para hacer legible el documento.
+
+TIP: para meter un espacio en estos frameworks lo mejor es usar una expresión que interprete javascript:
+</div>{' '}·{' '} <- esto va a poner un espacio,el punto y otro espacio tras el div.
+
+Para manejar las fechas (one month ago,etc) que indican la fecha de publicación del post en relación con la fecha actual vamos a usar Moment
+
+NOTA: flex-shrink es algo parecido a objetFit:contain,pero para divs o span 
+
+DELETING POST:
+Simplemente llamamos a deleteDoc(mirando si es mi post):
+     {session?.user.uid === post?.id ? (
+            <div
+              className="group flex items-center space-x-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                deleteDoc(doc(db, 'posts', id))
+                router.push('/')
+              }}
+            >
+
+			4H12M IMPLEMENTING RECOIL - STATE MANAGEMENT LIBRARY
+
+Instalemos recoil(y ya de paso moment(que requiere de moment y de react-moment):
+>npm i moment react-moment(import Moment from react-moment)
+>npm i recoil
+
+Hay que crear un directorio en la raiz llamado 'atoms'.Un atom es como un slice en redux,una parte del state que quiero dividir.En este caso creamos el fichero atoms/modalAtom.ts ya que es un pedazo de state para el modal.
+
+import { atom } from "recoil";
+
+export const modalState = atom({
+  key:'modalState',
+  default:false
+})
+Esto se puede traducir por este estado,pero obviamente ahora es global:
+const [ modalState,setModalState] = useState(false);
+
+usaremos otro también para el id:
+export const postIdState = atom({
+  key:'postIdState',
+  default:""
+})
+Fijate que hay que exportarlos y que la convención dictamina usar xxxState,en un principio.Ahora para usarlos importo estas funciones en los componentes que lo requieran:
+
+import { modalState, postIdState } from '... atoms/modalAtom.ts'
+
+Ahora los llamo con el hook useRecoilState(<atom>) y establezco dos nombres semánticamente apropiados para el getter y el setter:
+
+ const [isOpen, setIsOpen] = useRecoilState(modalState)
+ const [postId, setPostId] = useRecoilState(postIdState)
+
+Obviamente isOpen y setIsOpen son muy correctos.
+
+IMPORTANTE:lógicamente hay que englobar la app en un Provider,en este caso se llama RecoilRoot el HOC:
+import { RecoilRoot} from 'recoil';
+
+return (
+   <SessionProvider session={session} refetchInterval={5 * 60}>
+      <RecoilRoot>
+        <Component {...pageProps} />
+      </RecoilRoot>
+    </SessionProvider> )
+
+Ni siquiera lleva nada más,increible..Fijate que la <SessionProvider> debe ir por fuera,para que le suministre la sesión a recoil.
+
+En este punto ya estoy en condiciones de entender el primer botón que abrirá el modal para comentar:
+
+ {/* comment functionality */}
+  <div className="group flex items-center space-x-1"
+       onClick={(e) => {
+         e.stopPropagation()
+         setPostId(id)
+         setIsOpen(true)
+       }}
+   >
+  <div className="icon group-hover:bg-[#1d9bf0] group-hover:bg-opacity-10">
+     <ChatIcon className="h-5 group-hover:text-[#1d9bf0]" />
+            </div>
+            {comments.length > 0 && (
+              <span className="text-sm group-hover:text-[#1d9bf0]">
+                {comments.length}
+              </span>
+            )}
+  </div>
+Fijate que el botón simplemente establece a true el estado global del modal mediante el  atom modalState y también establece de forma global el id.Ahora también cobra sentido haber pasado el id del documento.
+
+NOTA:fijate que estos iconos tienen el evento click pero hay un div con el evento click también,asi que hubo que usar event.stopPropagation() para que no disparen en onClick del ancestro:
+   <div className="flex cursor-pointer border-b border-gray-700 p-3" onClick={() => router.push(`/${id}`)}>
+     <div>
+       <div>
+        <div
+            className="group flex items-center space-x-1"
+            onClick={(e) => {
+              e.stopPropagation() <- si no dispararía el router.push
+              setPostId(id)
+              setIsOpen(true)
+            }}
+          >
+Asi que stopPropagation hace que un hijo no dispare eventos en el padre,sólo los suyos.
+
+4h26m
