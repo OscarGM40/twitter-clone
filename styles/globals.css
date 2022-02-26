@@ -15,5 +15,8 @@
   .icon {
     @apply cursor-pointer w-9 h-9 hover:bg-[#1d9bf0] hover:bg-opacity-10 flex items-center justify-center rounded-full transition duration-200 ease-out;
   }
+  .modalWrapper {
+    @apply flex min-h-[800px] items-start justify-center px-4 pt-4 pb-20 text-center sm:block sm:min-h-screen sm:p-0;
+  }
 }
 

@@ -457,6 +457,111 @@ NOTA:fijate que estos iconos tienen el evento click pero hay un div con el event
               setIsOpen(true)
             }}
           >
-Asi que stopPropagation hace que un hijo no dispare eventos en el padre,sólo los suyos.
+Asi que stopPropagation hace que un hijo no dispare eventos en el padre,sólo los suyos.Es decir que previene los eventos del padre sobre él.
+flickering:parpadeo
 
-4h26m
+NOTA: recuerda borrar del Storage también con una referencia a una parte de él y despues borrando con deleteObject:
+
+  const deletePost = async (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    try {
+      await deleteDoc(doc(db, 'posts', id))
+      const imageRef = ref(storage, `posts/${id}/image`)
+      await deleteObject(imageRef)
+      router.push('/')
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+NOTA: en Typescript los eventos para el click son MouseEvent<HTMLDivElement> si por ejemplo es un click sobre un div.Si fuera sobre una <a> sería MouseEvent<HTMLAnchorElement>.Siempre va a ser xxxEvent<T>
+Todod ellos heredan de SyntheticEvent por razones obvias.
+
+				LIKE FUNCTIONALITY
+
+Al usar una DB con sockets puedo estar pendiente con la función onSnapshot de una parte de la DB.Esto me va a ayudar a hacer todo en tiempo real:
+
+PASO UNO: creo un observer a una zona concreta en este caso a posts/{id}/likes.En cada cambio se crea una snapshot nueva.La meto en setLikes<DocumentData[]>
+
+  useEffect(
+    () =>
+      onSnapshot(collection(db, 'posts', id, 'likes'), (snapshot) =>
+        setLikes(snapshot.docs)
+      ),
+    [db, id]
+  )
+Y estos cambios los hará el usuario,creando o borrando un documento en esa parte de la DB con mi id como nombre y el username como propiedad:
+  const likePost = async () => {
+    /* si ya me gustaba quito el documento, */
+    if (liked) {
+      await deleteDoc(doc(db, 'posts', id, 'likes', session?.user.uid!))
+    } else {
+      await setDoc(doc(db, 'posts', id, 'likes', session?.user.uid!), {
+        username: session?.user.name,
+      })
+    }
+  }
+Y para determinar es liked:boolean puedo usar un efecto que mire si está el id del usuario entre los que dieron like.Fijate que puedo mirar con un filter,un findIndex !== -1,daría igual.
+
+Dos formas de devolver el true o false.Fijate que el onSnapshot hace que likes tenga la información en tiempo real actualizada.Perfecto.
+ setLiked( likes?.findIndex((like) => like.id === session?.user?.uid) !== -1), 
+ setLiked( likes.filter((like) => like.id === session?.user?.uid).length > 0),
+
+NOTA: puedo observar que puedo traducir onSnapshot(url) => (snapshot...) por un simple onChange(zona de la DB) => (snapshot|cambio) donde se me devuelve el cambio como una snapshot y tengo un observer que se dispara con cada cambio en esa zona de la Db que quiera.Realmente Firebase es increible.
+
+IMPORTANTE: recuerda que además puedo hacer una query a ese cambio y traerlo ordenado:
+useEffect( 
+  () => onSnapshot(query(collection(db,'posts'),orderBy('timestamp','desc')),(snapshot) => setPost(snapshot.docs) <- meto los posts ordenados en cada cambio a post se disparará el Observable informando al observer con la data ordenada.
+Recuerda que esto es un Unsubscribe y hay que cancelarlo o con un return o con la forma corta con el return implicito.
+
+						4H 54M COMPONENTE MODAL 
+
+Para el modal ha usado una web que ofrece componentes para Tailwind:
+https://headlessui.dev/
+En esta web se ofrecen componentes para React o Vue para integrar con Tailwind
+# npm
+npm install @headlessui/react
+# Yarn
+yarn add @headlessui/react
+
+IMPORTANTE: fijate que el MOdal necesita un post,y que tengo el id del post desde el atom,luego:
+const [ postId,setPostId ] = useRecoilState(postIdState);
+const [ post,setPost ] = useState<DocumentData>();
+
+useEffect( 
+   () => onSnapshot(doc(db,'posts',postId),(snapshot) 
+  => setPost(snapshot.data())),[db,postId])
+Fijate que es un DocumentData lo que traigo y no un DocumentData[] asi que puedo usar data() para traerme el post transformado a un JS object.
+  
+NOTA:recuerda que aún no hemos metido require("tailwind-scrollbar-hide"), require("tailwind-scrollbar")
+
+IMPORTANTE: parece que tengo que añadir documentos a una colección:
+ const sendComment = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    try {
+      await addDoc(collection(db, 'posts', postId, 'comments'), {
+        comment,
+        username: session?.user.name,
+        userImg: session?.user.image,
+        tags: session?.user.tag,
+        timestamp: serverTimestamp(),
+      })
+      setComment('')
+      setIsOpen(false)
+      router.push('/')
+    } catch (error) {
+      console.log(error)
+    }
+  }
+addDoc(collection(db,'posts',postId,<nuevoDocumentoEmbebido>.No te compliques.
+
+IMPORANTE: los comentarios también debo ordenarlos:
+  useEffect(
+    () =>
+      onSnapshot(query(collection(db, 'posts', id, 'comments'),orderBy('timestamp','desc')),(snapshot) =>
+        setComments(snapshot.docs)
+      ),
+    [db, id]
+  )
+
+						5H29 POST PAGE

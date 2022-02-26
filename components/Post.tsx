@@ -11,14 +11,24 @@ import {
   HeartIcon as HeartIconFilled,
   ChatIcon as ChatIconFilled,
 } from '@heroicons/react/solid'
-import { deleteDoc, doc } from 'firebase/firestore'
+import {
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from 'firebase/firestore'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import { useState } from 'react'
-import { db } from '../firebase'
+import { MouseEvent, useEffect, useState } from 'react'
+import { db, storage } from '../firebase'
 import Moment from 'react-moment'
 import { modalState, postIdState } from '../atoms/modalAtom'
 import { useRecoilState } from 'recoil'
+import { deleteObject, ref } from 'firebase/storage'
 
 export interface Post {
   id: 'string'
@@ -39,7 +49,7 @@ interface Time {
 
 interface Props {
   id: string
-  post: Post
+  post: DocumentData | Post
   postPage: any
 }
 
@@ -47,15 +57,71 @@ const Post = ({ id, post, postPage }: Props) => {
   const { data: session } = useSession()
   const router = useRouter()
 
-  const [comments, setComments] = useState([])
-  const [likes, setLikes] = useState([])
+  const [comments, setComments] = useState<DocumentData[]>([])
+  const [likes, setLikes] = useState<DocumentData[]>([])
   const [liked, setLiked] = useState(false)
 
-  const [isOpen, setIsOpen] = useRecoilState(modalState)
-  const [postId, setPostId] = useRecoilState(postIdState)
+  const [, setIsOpen] = useRecoilState(modalState)
+  const [, setPostId] = useRecoilState(postIdState)
+
+  useEffect(
+    () =>
+      /* en cada cambio puedo observar lo que sucede con un observer,en este caso observo lo que pasa en likes y lo meto en setLikes.Lo mejor es traducirlo por onChange(zona) => (cambio){hacer algo con o por ese cambio,etc...} */
+      onSnapshot(collection(db, 'posts', id, 'likes'), (snapshot) => {
+        setLikes(snapshot.docs)
+      }),
+    [db, id]
+  )
+
+  useEffect(
+    () =>
+      onSnapshot(query(collection(db, 'posts', id, 'comments'),orderBy('timestamp','desc')),(snapshot) =>
+        setComments(snapshot.docs)
+      ),
+    [db, id]
+  )
+
+  useEffect(
+    () =>
+      /*   setLiked(
+        likes?.findIndex((like) => like.id === session?.user?.uid) !== -1
+      ), */
+      setLiked(
+        likes.filter((like) => like.id === session?.user?.uid).length > 0
+      ),
+    [likes]
+  )
+
+  const likePost = async () => {
+    /* si ya me gustaba quito el documento, */
+    if (liked) {
+      await deleteDoc(doc(db, 'posts', id, 'likes', session?.user.uid!))
+    } else {
+      await setDoc(doc(db, 'posts', id, 'likes', session?.user.uid!), {
+        username: session?.user.name,
+      })
+    }
+  }
+
+  const deletePost = async (e: MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    try {
+      await deleteDoc(doc(db, 'posts', id))
+      if (post?.image) {
+        const imageRef = ref(storage, `posts/${id}/image`)
+        await deleteObject(imageRef)
+      }
+      router.push('/')
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
-    <div className="flex cursor-pointer border-b border-gray-700 p-3" onClick={() => router.push(`/${id}`)}>
+    <div
+      className="flex cursor-pointer border-b border-gray-700 p-3"
+      onClick={() => router.push(`/${id}`)}
+    >
       {!postPage && (
         <img
           src={post?.userImg}
@@ -143,11 +209,7 @@ const Post = ({ id, post, postPage }: Props) => {
           {session?.user.uid === post?.id ? (
             <div
               className="group flex items-center space-x-1"
-              onClick={(e) => {
-                e.stopPropagation()
-                deleteDoc(doc(db, 'posts', id))
-                router.push('/')
-              }}
+              onClick={deletePost}
             >
               <div className="icon group-hover:bg-red-600/10">
                 <TrashIcon className="h-5 group-hover:text-red-600" />
@@ -161,11 +223,11 @@ const Post = ({ id, post, postPage }: Props) => {
             </div>
           )}
           {/* Like functionality */}
-          {/*           <div
+          <div
             className="group flex items-center space-x-1"
             onClick={(e) => {
               e.stopPropagation()
-              // likePost()
+              likePost()
             }}
           >
             <div className="icon group-hover:bg-pink-600/10">
@@ -184,7 +246,7 @@ const Post = ({ id, post, postPage }: Props) => {
                 {likes.length}
               </span>
             )}
-          </div> */}
+          </div>
 
           <div className="icon group">
             <ShareIcon className="h-5 group-hover:text-[#1d9bf0]" />
