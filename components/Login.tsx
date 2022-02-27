@@ -1,10 +1,10 @@
-import { ClientSafeProvider, LiteralUnion, signIn } from 'next-auth/react'
+import { ClientSafeProvider, LiteralUnion, signIn,  } from 'next-auth/react'
 import BuiltInProviderType from 'next-auth/providers'
 import Image from 'next/image'
 
 type Props = {
   //@ts-ignore
-  providers: Record< LiteralUnion<typeof BuiltInProviderType, string>, ClientSafeProvider > | null
+  providers: Record< LiteralUnion<typeof BuiltInProviderType, string>, ClientSafeProvider > | null | undefined,
 }
 const Login = ({ providers }: Props) => {
   return (
@@ -17,7 +17,7 @@ const Login = ({ providers }: Props) => {
       />
 
       <div>
-        {Object.values(providers!).map((provider) => (
+        { Object.values(providers!).map((provider) => (
           <div key={provider.name}>
             {/* https://devdojo.com/tailwindcss/buttons#_ */}
             <button
@@ -37,3 +37,4 @@ const Login = ({ providers }: Props) => {
 }
 
 export default Login
+

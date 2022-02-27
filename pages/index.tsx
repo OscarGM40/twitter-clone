@@ -1,52 +1,25 @@
 import type { NextPageContext } from 'next'
-import Head from 'next/head'
 import Feed from '../components/Feed'
-import Sidebar from '../components/Sidebar'
-import {
-  ClientSafeProvider,
-  getProviders,
-  getSession,
-  LiteralUnion,
-  useSession,
-} from 'next-auth/react'
-import BuiltInProviderType from 'next-auth/providers'
-import Login from '../components/Login'
-import Modal from '../components/Modal'
-import { modalState } from '../atoms/modalAtom'
-import { useRecoilState } from 'recoil'
+import { getProviders, getSession } from 'next-auth/react'
+import Wrapper from '../components/Wrapper'
 
-type Props = {
+interface Props {
+  providers: any
   trendingResults: any
   followResults: any
-  //@ts-ignore
-  providers: Record<LiteralUnion<typeof BuiltInProviderType, string>,
-    ClientSafeProvider
-  > | null
 }
-
-const Home = ({ trendingResults, followResults, providers }: Props) => {
-  const { data: session } = useSession()
-  const [isOpen, setIsOpen] = useRecoilState(modalState)
-
-  if (!session) return <Login providers={providers} />
-
+const Home = ({ providers, trendingResults, followResults }: Props) => {
   return (
-    <div className="">
-      <Head>
-        <title>Twitter</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <main className="mx-auto flex min-h-screen max-w-[1500px] bg-black">
-        <Sidebar />
-        <Feed />
-        {/* Widgets */}
-
-        {isOpen && <Modal />}
-      </main>
-    </div>
+    <Wrapper
+      providers={providers}
+      title="Home / Twitter"
+      trendingResults={trendingResults}
+      followResults={followResults}
+    >
+      <Feed />
+    </Wrapper>
   )
 }
-
 export default Home
 
 export async function getServerSideProps(context: NextPageContext) {

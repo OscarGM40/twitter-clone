@@ -565,3 +565,18 @@ IMPORANTE: los comentarios también debo ordenarlos:
   )
 
 						5H29 POST PAGE
+
+Fijate que puedo rescatar el param usando useRouter sin tener que mandarlo con getServerSideProps(aunque también puedo hacerlo):
+ const router = useRouter();
+ const { id } = router.query;
+
+NOTA: recuerda que w-full o h-full son width:100%.No confundir con w-screen que si es 100vw.Aparte recuerda que puedo pasarle una fracción,como w-10/12 que será un 83.3333%.Genial.
+
+Realmente no tiene nada,eso si recuerda que <Post> recibia un boolean y ahora lo va a recibir para usar diferentes estilos(apenas unos margenes).En este punto hay algo de código duplicado que hay que manejar.
+
+En cuanto a los comments no tiene nada,los traigo ordenados de la DB,etc...
+Recuerda que aún no ha metido los plugins
+
+			6h05m WIDGETS Y TRENDING TOPICS COMPONENT
+
+

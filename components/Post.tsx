@@ -27,17 +27,17 @@ import { MouseEvent, useEffect, useState } from 'react'
 import { db, storage } from '../firebase'
 import Moment from 'react-moment'
 import { modalState, postIdState } from '../atoms/modalAtom'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useSetRecoilState } from 'recoil'
 import { deleteObject, ref } from 'firebase/storage'
 
 export interface Post {
   id: 'string'
+  username: 'string'
+  userImg: 'string'
   image: 'string'
   tag: 'string'
   text: 'string'
   timestamp: Time
-  userImg: 'string'
-  username: 'string'
 }
 interface Time {
   ut: {
@@ -50,7 +50,7 @@ interface Time {
 interface Props {
   id: string
   post: DocumentData | Post
-  postPage: any
+  postPage?: boolean
 }
 
 const Post = ({ id, post, postPage }: Props) => {
@@ -61,7 +61,7 @@ const Post = ({ id, post, postPage }: Props) => {
   const [likes, setLikes] = useState<DocumentData[]>([])
   const [liked, setLiked] = useState(false)
 
-  const [, setIsOpen] = useRecoilState(modalState)
+  const setIsOpen = useSetRecoilState(modalState)
   const [, setPostId] = useRecoilState(postIdState)
 
   useEffect(

@@ -1,4 +1,4 @@
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { modalState, postIdState } from '../atoms/modalAtom'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment, MouseEvent, useEffect, useState } from 'react'
@@ -28,7 +28,7 @@ const Modal = (props: Props) => {
   const router = useRouter()
 
   const [isOpen, setIsOpen] = useRecoilState(modalState)
-  const [postId, setPostId] = useRecoilState(postIdState)
+  const postId = useRecoilValue(postIdState)
   const [post, setPost] = useState<DocumentData>()
   const [comment, setComment] = useState('')
 
