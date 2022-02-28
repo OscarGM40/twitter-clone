@@ -97,7 +97,7 @@ const Input = () => {
 
   return (
     <div
-      className={`flex space-x-3 overflow-y-scroll border-b border-gray-700 p-3 ${loading && 'opacity-60'}`}
+      className={`flex space-x-3 overflow-y-scroll scrollbar-hide border-b border-gray-700 p-3 ${loading && 'opacity-60'}`}
     >
       <img
         src={session?.user.image!}
@@ -112,7 +112,7 @@ const Input = () => {
             onChange={handleTextArea}
             rows={2}
             placeholder="What's happening?"
-            className=" min-h-[50px] w-full bg-transparent text-lg tracking-wide text-[#d9d9d9] placeholder-gray-500 outline-none"
+            className=" min-h-[50px] w-full scrollbar-hide  bg-transparent text-lg tracking-wide text-[#d9d9d9] placeholder-gray-500 outline-none"
           />
 
           {selectedFile && (

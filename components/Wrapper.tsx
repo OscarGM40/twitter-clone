@@ -44,7 +44,7 @@ const Wrapper = ({
         <title>{title}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="mx-auto flex min-h-screen max-w-[1500px] bg-black">
+      <main className="mx-auto flex min-h-screen max-w-[1700px] bg-black">
         <Sidebar />
         {children}
         <Widgets

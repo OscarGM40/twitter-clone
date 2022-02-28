@@ -52,7 +52,7 @@ const Comment = ({ id, comment }: Props) => {
             <span className="text-sm hover:underline sm:text-[15px]">
               <Moment fromNow>{comment?.timestamp?.toDate()}</Moment>
             </span>
-            <p className="mt-0.5 max-w-lg overflow-scroll text-[15px] text-[#d9d9d9] sm:text-base">
+            <p className="mt-0.5 max-w-lg overflow-scroll scrollbar-hide text-[15px] text-[#d9d9d9] sm:text-base">
               {comment?.comment}
             </p>
           </div>

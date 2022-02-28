@@ -579,4 +579,4 @@ Recuerda que aún no ha metido los plugins
 
 			6h05m WIDGETS Y TRENDING TOPICS COMPONENT
 
-
+Simplemente copiaré los componentes ya que son bastante sencillos.Arreglé todo lo posible y ya puedo desplegarla.Como siempre hay que crear las env en el proyectoy agregar la redirect URL al proyecto Google.A por otro proyecto.

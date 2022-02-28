@@ -51,7 +51,7 @@ const PostPage = ({ providers, trendingResults,followResults }: Props) => {
       trendingResults={trendingResults}
       followResults={followResults}
     >
-      <div className="max-w-2xl flex-grow border-l border-r border-gray-700 sm:ml-[73px] xl:ml-[370px]">
+      <div className="max-w-4xl flex-grow border-l border-r border-gray-700 sm:ml-[73px] xl:ml-[370px]">
         <div className="sticky top-0 z-50 flex items-center gap-x-4 border-b border-gray-700 bg-black px-1.5 py-2 text-xl font-semibold text-[#d9d9d9]">
           <div
             className="hoverAnimation flex h-9 w-9 items-center justify-center xl:px-0"
