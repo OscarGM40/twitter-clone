@@ -2,6 +2,8 @@ import type { NextPageContext } from 'next'
 import Feed from '../components/Feed'
 import { getProviders, getSession } from 'next-auth/react'
 import Wrapper from '../components/Wrapper'
+import axios from 'axios'
+import https from 'node:https'
 
 interface Props {
   providers: any
@@ -23,9 +25,14 @@ const Home = ({ providers, trendingResults, followResults }: Props) => {
 export default Home
 
 export async function getServerSideProps(context: NextPageContext) {
+  const instance = axios.create({
+    httpsAgent: new https.Agent({
+      rejectUnauthorized: false,
+    }),
+  })
   const [trendingResults, followResults] = await Promise.all([
-    fetch('https://jsonkeeper.com/b/NKEV').then((res) => res.json()),
-    fetch('https://jsonkeeper.com/b/WWMJ').then((res) => res.json()),
+    await instance.get('https://jsonkeeper.com/b/NKEV'),
+    await instance.get('https://jsonkeeper.com/b/WWMJ'),
   ])
   /* providers me devolverá todos los providers,en este caso solo uno */
   const providers = await getProviders()
@@ -33,8 +40,8 @@ export async function getServerSideProps(context: NextPageContext) {
 
   return {
     props: {
-      trendingResults,
-      followResults,
+      trendingResults:trendingResults.data,
+      followResults:followResults.data,
       providers,
       session,
     },

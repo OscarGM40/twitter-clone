@@ -10,7 +10,7 @@ const Login = ({ providers }: Props) => {
   return (
     <div className="flex flex-col items-center space-y-20 pt-48">
       <Image
-        src="https://rb.gy/ogau5a"
+        src="/images/twiter-icon.jpg"
         width={150}
         height={150}
         objectFit="contain"

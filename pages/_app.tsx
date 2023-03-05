@@ -10,7 +10,7 @@ export default function MyApp({
 }: AppProps) {
   return (
     /* hace poll de la session cada 300 segundos */
-    <SessionProvider session={session} refetchInterval={5 * 60}>
+    <SessionProvider session={session}>
       <RecoilRoot>
         <Component {...pageProps} />
       </RecoilRoot>
