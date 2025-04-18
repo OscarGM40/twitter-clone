@@ -26,7 +26,7 @@ const Widgets = ({ trendingResults, followResults }: Props) => {
       </div>
       <div className="w-11/12 space-y-3 rounded-xl bg-[#15181c] pt-2 text-[#d9d9d9] xl:w-9/12">
         <h4 className="px-4 text-xl font-bold">What's happening</h4>
-        {trendingResults.map((trending, index) => (
+        {trendingResults?.map((trending, index) => (
           <Trending key={index} trending={trending} />
         ))}
         <button className="flex w-full cursor-pointer items-center justify-between px-4 py-3 font-light text-[#1d9bf0] transition duration-200 ease-out hover:bg-white hover:bg-opacity-[0.03]">
@@ -36,7 +36,7 @@ const Widgets = ({ trendingResults, followResults }: Props) => {
 
       <div className="w-11/12 space-y-3 rounded-xl bg-[#15181c] pt-2 text-[#d9d9d9] xl:w-9/12">
         <h4 className="px-4 text-xl font-bold">Who to follow</h4>
-        {followResults.map((result, index) => (
+        {followResults?.map((result, index) => (
           <div
             className="flex cursor-pointer items-center px-4 py-2 transition duration-200 ease-out hover:bg-white hover:bg-opacity-[0.03]"
             key={index}

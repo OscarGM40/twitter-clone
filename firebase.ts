@@ -4,14 +4,13 @@ import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBF3CyPIoZ3c6ns3fMh1xXs1_Atq90P81g",
-  authDomain: "twitter-clone-ts-1ef4e.firebaseapp.com",
-  projectId: "twitter-clone-ts-1ef4e",
-  storageBucket: "twitter-clone-ts-1ef4e.appspot.com",
-  messagingSenderId: "1018191144661",
-  appId: "1:1018191144661:web:cbc6587b92570c9725a45c"
-};
-
+  apiKey: 'AIzaSyBbU5q0UO3jj8Hsl88bNFXbMZg1PEl_TGY',
+  authDomain: 'twitter-clone-02.firebaseapp.com',
+  projectId: 'twitter-clone-02',
+  storageBucket: 'twitter-clone-02.appspot.com',
+  messagingSenderId: '669851825273',
+  appId: '1:669851825273:web:6a68132fa851454e6a50a8',
+}
 // Recuerda que en Next no puedo usar initializeApp() simplemente
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore();

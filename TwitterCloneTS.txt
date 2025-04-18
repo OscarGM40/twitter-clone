@@ -3,8 +3,7 @@
 Playlist: https://www.youtube.com/watch?v=5Wak0iyGCrc&t=169s
 Repo: https://github.com/lukef7fywmrp/twitter-clone
 
-Parece que Recoil es mucho mejor que Redux,por eso lo usaremos.Empiezo creando un proyecto next con tailwind y también en Firebase.
-Ya lo enlazaremos más tarde.
+Empiezo creando un proyecto next con tailwind y también en Firebase.
 
 NOTA: fijate que Next crea la rama main y no master como create-react-app.
 

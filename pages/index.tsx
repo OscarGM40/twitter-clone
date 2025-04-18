@@ -30,18 +30,18 @@ export async function getServerSideProps(context: NextPageContext) {
       rejectUnauthorized: false,
     }),
   })
-  const [trendingResults, followResults] = await Promise.all([
+ /*  const [trendingResults, followResults] = await Promise.all([
     await instance.get('https://jsonkeeper.com/b/NKEV'),
     await instance.get('https://jsonkeeper.com/b/WWMJ'),
-  ])
+  ]) */
   /* providers me devolverá todos los providers,en este caso solo uno */
   const providers = await getProviders()
   const session = await getSession(context)
 
   return {
     props: {
-      trendingResults:trendingResults.data,
-      followResults:followResults.data,
+    /*   trendingResults:trendingResults.data,
+      followResults:followResults.data, */
       providers,
       session,
     },

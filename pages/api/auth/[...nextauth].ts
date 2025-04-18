@@ -8,7 +8,7 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_SECRET!,
     }),
   ],
-  secret: process.env.NEXTAUT_SECRET!,
+  secret: process.env.NEXTAUTH_SECRET!,
   callbacks: {
     //  session(session,user,token) siempre debe de retornar la session.Cada callback pre-built debe retornar un arg
     async session({ session, user, token }) {
